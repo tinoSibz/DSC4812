@@ -61,9 +61,14 @@ lambda_guerrero <- cement_production |>
 # Print lambda
 lambda_guerrero
 
+# add transformed cement volume
+
+cement_production <- cement_production |>
+  mutate(Cement_Stabilized = box_cox(Cement, lambda_guerrero))
+
 # Apply Box-Cox transformation and plot
 cement_production |>
-  autoplot(box_cox(Cement, lambda_guerrero)) +
+  autoplot(box_cox(Cement_Stabilized, lambda_guerrero)) +
   labs(
     title = "Box-Cox Transformed Cement Production (λ ≈ -0.31)",
     subtitle = "Transformed to stabilize variance for modeling",
