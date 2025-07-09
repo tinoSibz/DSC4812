@@ -1,0 +1,269 @@
+---
+title: "Forecasting: Quarterly International Arrivals from the UK"
+author: "Tinozivashe N. Sibanda (10501541)"
+format:
+  pdf:
+    toc: true
+    toc-depth: 4
+    code-fold: true
+    code-line-numbers: true
+    theme: sandstone
+    fig-cap-location: bottom
+    fig-align: center
+    tbl-cap-location: bottom
+
+---
+
+```{r}
+#| label: load-packages
+#| echo: false
+#| output: false
+
+library(fpp3)
+library(lintr)
+library(styler)
+library(latex2exp)
+library(kableExtra)
+library(scales)
+
+theme_custom <- theme(
+  text = element_text(size = 12),
+  panel.grid = element_blank(),
+  panel.grid.major.y = element_line(colour = "#e3e1e1", linetype = 2),
+  plot.title.position = 'plot',
+  legend.position = 'top',
+  legend.title = element_blank()
+)
+
+theme_set(theme_minimal() + theme_custom)
+```
+
+
+{{< pagebreak >}}
+
+# Introduction
+
+@fig-uk-arrivals-ts shows that international arrivals to Australia from the United Kingdom followed an upward trend from 1981 until around 2005, after which the series displays a gradual decline. It also indicates a clear seasonal pattern, with peaks occurring in Q4 (likely due to end-of-year travel and holidays) and troughs in Q2 and Q3. The variation of the seasonal pattern increases with time.
+
+```{r}
+#| label: fig-uk-arrivals-ts
+#| fig-cap: "Quarterly international arrivals to Australia from the UK (1981 Q1 – 2012 Q3)."
+#| echo: false
+
+arrivals_from_uk <- aus_arrivals |>
+  filter(Origin == "UK")
+
+arrivals_from_uk |>
+  autoplot(Arrivals, color = "steelblue") +
+  labs(
+    title = "UK Arrivals to Australia",
+    y = "Arrivals (in thousands)",
+    caption = "Source: Tourism Research Australia."
+  ) +
+  scale_y_continuous(labels = label_number(scale = 1e-3, suffix = "k"))
+
+# arrivals_from_uk |>
+#   autoplot(Arrivals, color = "steelblue") +
+#   labs(
+#     title = "UK Arrivals to Australia",
+#     x = "Year",
+#     y = 
+#   ) 
+```
+
+
+In this analysis, we evaluate two approaches for assessing forecasting model performance: **traditional train–test split** and **time series cross-validation (TSCV)**.
+
+- The train–test split withholds the last two years of data from the model-fitting process. Specifically, the model is trained on data from *1981 Q1* to *2010 Q3*, and forecasts are generated on the holdout period from *2010 Q4* to *2012 Q3*. This enables straightforward evaluation by comparing the forecasts to actual observations over a fixed future window.
+
+- Time series cross-validation (TSCV), on the other hand, provides a realistic and rigorous evaluation. Rather than relying on a single holdout period, TSCV repeatedly fits the model on expanding training windows and computes forecast accuracy over a rolling set of future observations. This better reflects operational forecasting workflows, where models are continually updated as new data arrives and are expected to perform consistently over time.
+
+Using both methods allows us to evaluate how well each model fits historical data and how reliably it generalizes across different time periods.
+
+
+```{r}
+#| label: uk-arrivals-train-test
+#| echo: false
+
+arrivals_uk_train <- arrivals_from_uk |> 
+  filter_index("1981 Q1" ~ "2010 Q3")  # holds out last 2 years
+
+arrivals_uk_test <- arrivals_from_uk |> 
+  filter_index("2010 Q4" ~ .)
+```
+
+```{r}
+#| echo: false
+
+arrivals_uk_fit <- arrivals_uk_train |>
+  model(
+    SNaive = SNAIVE(Arrivals),
+    ETS_LOG = ETS(log(Arrivals) ~ error("A") + trend("Ad") + season("A")),
+    STL_ETS = decomposition_model(
+      STL(log(Arrivals)),
+      ETS(season_adjust ~ error("A") + trend("A") + season("N"))
+    ),
+    HWM = ETS(Arrivals ~ error("M") + trend("A") + season("M")),
+  )
+```
+
+
+# Model Evaluation 
+
+We trained four forecasting methods, each incorporating a different strategy for capturing trend and seasonality in the data, namely:
+
+- **Seasonal Naïve** method(`SNaive`): A simple benchmark model that forecasts each quarter to be equal to the same quarter in the previous year. It captures seasonality but assumes no trend.
+- **Holt-Winters Multiplicative** method (`HWM`): Captures both a changing trend and seasonal patterns whose magnitude grows with the level of the series. This model is well-suited to the observed data and serves as our baseline exponential smoothing method.
+- **Additive ETS method on Log-Transformed Data** (`ETS_LOG`): Applies an exponential smoothing model with additive errors, damped trend, and additive seasonality to log-transformed arrivals. This approach stabilizes variance and can improve forecast reliability for series with exponential growth or volatility.
+- **STL Decomposition with ETS** (`STL_ETS`): Decomposes the log-transformed series using STL (Seasonal-Trend decomposition using Loess), then fits an ETS model to the seasonally adjusted component. This method provides flexibility in modeling complex seasonality and trend separately.
+
+## Train-Test Split Approach
+
+@tbl-uk-arrivals-accuracy presents the forecasting accuracy of the four candidate models using RMSE and MAPE for both the training and test sets. We see that additive exponential smoothing method on log-transformed data (`ETS_LOG`) offered the most balanced performance, with low RMSE and MAPE on both training and test sets, making it the most reliable overall.
+
+
+```{r}
+#| label: tbl-uk-arrivals-accuracy
+#| tbl-cap: "Forecast accuracy (RMSE and MAPE) of each model on training and test sets"
+#| tbl-pos: 'H'
+#| echo: false
+
+
+# Forecast on test period (2010 Q4 – 2012 Q3)
+arrivals_uk_fc <- arrivals_uk_fit |> forecast(h = 8)
+
+# Evaluate model accuracy on training and test sets
+arrivals_uk_accuracy <- bind_rows(
+  accuracy(arrivals_uk_fit),  # Training set
+  accuracy(arrivals_uk_fc, arrivals_uk_test)  # Test set
+) 
+
+arrivals_uk_accuracy |>
+  select(model = .model, type = .type, RMSE, MAPE) |>
+  pivot_wider(names_from = type, values_from = c(RMSE, MAPE)) |>
+  mutate(model = as.character(model)) |>
+  kbl(
+    digits = 2,
+    col.names = c("Model", "Training", "Test", "Training", "Test"),
+    booktabs = TRUE
+  ) |>
+  add_header_above(c(" " = 1, "RMSE" = 2, "MAPE" = 2)) |>
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+@fig-uk-arrivals-residuals shows that the innovation residuals are uncorrelated and have zero-mean, suggesting the forecasts generated by the additive exponential smoothing method on log-transformed data (`ETS_LOG`) are good.
+
+```{r}
+#| label: fig-uk-arrivals-residuals
+#| fig-cap: "Residual diagnostics for the best fitted model to UK arrivals training data."
+#| echo: false
+#| fig-pos: "H"
+#| fig-height: 5
+#| fig-width: 6
+
+# Residual diagnostics for best-performing model
+arrivals_uk_fit |>
+  select(ETS_LOG) |>
+  gg_tsresiduals() +
+  labs(
+    title = "Residual Diagnostics: ETS_LOG",
+    subtitle = "Additive exponential smoothing method on log-transformed data"
+  )
+```
+
+To make sure that the residuals are not distinguishable from a white noise series, we applied the Ljung-Box test. @tbl-uk-arrivals-ljungbox shows the Ljung–Box test results (lag = 10) applied to the residuals of each model. The null hypothesis is that residuals are uncorrelated (i.e., resemble white noise). Specifically, for `ETS_LOG`, the p-value is $0.355$, indicating no significant autocorrelation in the residuals — a good sign.
+
+```{r}
+#| label: tbl-uk-arrivals-ljungbox
+#| tbl-cap: "Ljung–Box test (lag 10) on residuals from each forecasting model for UK arrivals."
+#| echo: false
+#| tbl-pos: "H"
+
+augment(arrivals_uk_fit) |>
+  features(.innov, ljung_box, lag = 10) |>
+  select(Model = .model, LB_Statistic = lb_stat, P_Value = lb_pvalue) |>
+  kbl(digits = 3, booktabs = TRUE, caption = NULL) |>
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+
+We conclude that `ETS_LOG` is not only the most accurate model but also passes residual diagnostics — validating it as the best-performing model.
+
+## Time Series Cross-Validation Approach
+
+We now apply time series cross-validation (TSCV) to compare the forecasting accuracy of the same four models evaluated earlier: `SNaive`, `ETS_LOG`, `STL_ETS`, and `HWM`. @tbl-uk-arrivals-tscv reports the RMSE and MAPE for each forecasting model based on 8-step ahead rolling forecasts using time series cross-validation.
+
+
+
+```{r}
+#| label: tbl-uk-arrivals-tscv
+#| tbl-cap: "Forecast accuracy (RMSE and MAPE) of each model using time series cross-validation (8-step ahead rolling forecasts)."
+#| tbl-pos: 'H'
+#| echo: false
+
+# Perform 8-step ahead time series cross-validation
+tscv_errors <- arrivals_from_uk |>
+  stretch_tsibble(.init = 80, .step = 2) |>  # ~20 years of initial training
+  model(
+    SNaive = SNAIVE(Arrivals),
+    ETS_LOG = ETS(log(Arrivals) ~ error("A") + trend("Ad") + season("A")),
+    STL_ETS = decomposition_model(
+      STL(log(Arrivals)),
+      ETS(season_adjust ~ error("A") + trend("A") + season("N"))
+    ),
+    HWM = ETS(Arrivals ~ error("M") + trend("A") + season("M"))
+  ) |>
+  forecast(h = 8) |> 
+  accuracy(arrivals_from_uk)  # compares forecast with actuals
+
+# Summarize RMSE and MAPE for each model
+tscv_errors |>
+  group_by(.model) |>
+  summarise(
+    RMSE = mean(RMSE, na.rm = TRUE),
+    MAPE = mean(MAPE, na.rm = TRUE)
+  ) |>
+  mutate(
+    across(where(is.numeric), \(x) round(x, 2))
+  ) |>
+  rename(Model = .model) |>
+  kbl(booktabs = TRUE, caption = NULL) |>
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+
+Again, we see that the `ETS_LOG` method demonstrates consistently strong performance, achieving the lowest RMSE and maintaining the best MAPE among the candidate models. 
+
+## Forecasts: Best Model
+
+The additive exponential smoothing method on log-transformed data ( `ETS_LOG`) is suitable when the seasonal variation increases proportionally with the level of the series, as observed in @fig-uk-arrivals-ts - this behavior—known as multiplicative seasonality — characterized by widening seasonal peaks and troughs over time.
+
+@fig-uk-arrivals-best-fc shows that forecasts generated by the `ETS_LOG` method produce reasonable forecasts that are close to the actual arrival values in the testing set.
+
+```{r}
+#| label: fig-uk-arrivals-best-fc
+#| fig-cap: "2-Year forecast of international arrivals to Australia from the UK using best forecasting method."
+#| echo: false
+#| fig-pos: "H"
+
+# Fit
+best_fit <- arrivals_uk_train |>
+  model(
+    ETS_LOG = ETS(log(Arrivals) ~ error("A") + trend("Ad") + season("A"))
+  )
+
+# Forecast
+best_fc <- best_fit |> forecast(h = 8)
+
+# Plot
+best_fc |> 
+  autoplot(arrivals_from_uk) +
+  labs(
+    title = "Forecasts: International arrivals to Australia from the UK",
+  ) +
+  scale_y_continuous(labels = label_number(scale = 1e-3, suffix = "k"))
+```
+
+# Discussion
+
+`ETS_LOG` provides the best RMSE and MAPE performance across both the train-test split and time series cross-validation approach. Its use of log transformation and damped trend appears to generalize well across time. These results reinforce `ETS_LOG` as the most effective model for forecasting UK arrivals.

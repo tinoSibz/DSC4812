@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.32">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Tinozivashe N. Sibanda (10501541)">
+
+<title>Time series decomposition and exponential smoothing</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="Assignment2_files/libs/clipboard/clipboard.min.js"></script>
+<script src="Assignment2_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="Assignment2_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="Assignment2_files/libs/quarto-html/popper.min.js"></script>
+<script src="Assignment2_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="Assignment2_files/libs/quarto-html/anchor.min.js"></script>
+<link href="Assignment2_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="Assignment2_files/libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="Assignment2_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="Assignment2_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="Assignment2_files/libs/bootstrap/bootstrap-268d3779a6da6cf7e66354be2ae425a0.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="Assignment2_files/libs/kePrint-0.0.1/kePrint.js"></script>
+<link href="Assignment2_files/libs/lightable-0.0.1/lightable.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#quarterly-australian-cement-production" id="toc-quarterly-australian-cement-production" class="nav-link active" data-scroll-target="#quarterly-australian-cement-production">Quarterly Australian Cement Production</a>
+  <ul>
+  <li><a href="#guerreros-method-for-box-cox-lambda-selection" id="toc-guerreros-method-for-box-cox-lambda-selection" class="nav-link" data-scroll-target="#guerreros-method-for-box-cox-lambda-selection">Guerrero’s method for Box-Cox lambda selection</a></li>
+  <li><a href="#applying-a-box-cox-transformation" id="toc-applying-a-box-cox-transformation" class="nav-link" data-scroll-target="#applying-a-box-cox-transformation">Applying a Box-Cox Transformation</a></li>
+  <li><a href="#decomposition-using-stl-and-x-11" id="toc-decomposition-using-stl-and-x-11" class="nav-link" data-scroll-target="#decomposition-using-stl-and-x-11">Decomposition using STL and X-11</a></li>
+  </ul></li>
+  <li><a href="#monthly-business-class-airline-passengers" id="toc-monthly-business-class-airline-passengers" class="nav-link" data-scroll-target="#monthly-business-class-airline-passengers">Monthly Business Class Airline Passengers</a>
+  <ul>
+  <li><a href="#box-cox-transformation-via-guerreros-method" id="toc-box-cox-transformation-via-guerreros-method" class="nav-link" data-scroll-target="#box-cox-transformation-via-guerreros-method">Box-Cox Transformation via Guerrero’s Method</a></li>
+  <li><a href="#decomposition-using-stl-and-x-11-1" id="toc-decomposition-using-stl-and-x-11-1" class="nav-link" data-scroll-target="#decomposition-using-stl-and-x-11-1">Decomposition using STL and X-11</a></li>
+  </ul></li>
+  <li><a href="#annual-south-african-exports" id="toc-annual-south-african-exports" class="nav-link" data-scroll-target="#annual-south-african-exports">Annual South African Exports</a>
+  <ul>
+  <li><a href="#stl-decomposition" id="toc-stl-decomposition" class="nav-link" data-scroll-target="#stl-decomposition">STL Decomposition</a></li>
+  <li><a href="#fitting-exponential-smoothing-models" id="toc-fitting-exponential-smoothing-models" class="nav-link" data-scroll-target="#fitting-exponential-smoothing-models">Fitting Exponential Smoothing Models</a></li>
+  <li><a href="#model-evaluation" id="toc-model-evaluation" class="nav-link" data-scroll-target="#model-evaluation">Model Evaluation</a></li>
+  <li><a href="#forecast-visualization" id="toc-forecast-visualization" class="nav-link" data-scroll-target="#forecast-visualization">Forecast Visualization</a></li>
+  <li><a href="#prediction-interval-manual-vs-r-calculated" id="toc-prediction-interval-manual-vs-r-calculated" class="nav-link" data-scroll-target="#prediction-interval-manual-vs-r-calculated">95% Prediction Interval (Manual vs R Calculated)</a></li>
+  </ul></li>
+  <li><a href="#quarterly-international-arrivals-from-the-uk" id="toc-quarterly-international-arrivals-from-the-uk" class="nav-link" data-scroll-target="#quarterly-international-arrivals-from-the-uk">Quarterly International Arrivals from the UK</a>
+  <ul>
+  <li><a href="#train-test-split" id="toc-train-test-split" class="nav-link" data-scroll-target="#train-test-split">Train-Test Split</a></li>
+  <li><a href="#holt-winters-multiplicative-model" id="toc-holt-winters-multiplicative-model" class="nav-link" data-scroll-target="#holt-winters-multiplicative-model">Holt-Winters’ multiplicative model</a></li>
+  <li><a href="#forecasting-models-considered" id="toc-forecasting-models-considered" class="nav-link" data-scroll-target="#forecasting-models-considered">Forecasting Models Considered</a></li>
+  <li><a href="#model-evaluation-1" id="toc-model-evaluation-1" class="nav-link" data-scroll-target="#model-evaluation-1">Model Evaluation</a></li>
+  <li><a href="#time-series-cross-validation" id="toc-time-series-cross-validation" class="nav-link" data-scroll-target="#time-series-cross-validation">Time Series Cross-Validation</a></li>
+  </ul></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Time series decomposition and exponential smoothing</h1>
+<p class="subtitle lead">DSC4812: Forecasting</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Tinozivashe N. Sibanda (10501541) </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="quarterly-australian-cement-production" class="level1">
+<h1>Quarterly Australian Cement Production</h1>
+<p>The <code>aus_production</code> data from the <code>tsibbledata</code> package contains quarterly estimates of selected indicators of manufacturing production in Australia. We focus on the <code>Cement</code> variable, which records the production of Portland cement in thousands of tonnes and convert this to <code>megatonnes</code> (millions of tonnes) for interpretability.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="co"># Cement production time series in millions of tonnes</span></span>
+<span id="cb1-2"><a href="#cb1-2"></a>cement_production <span class="ot">&lt;-</span> aus_production <span class="sc">|&gt;</span></span>
+<span id="cb1-3"><a href="#cb1-3"></a>  <span class="fu">select</span>(Quarter, Cement) <span class="sc">|&gt;</span> <span class="co"># Cement in kilotonnes (thousands)</span></span>
+<span id="cb1-4"><a href="#cb1-4"></a>  <span class="fu">mutate</span>(<span class="at">Cement =</span> Cement <span class="sc">/</span> <span class="dv">1000</span>) <span class="co"># Convert to megatonnes (millions)</span></span>
+<span id="cb1-5"><a href="#cb1-5"></a></span>
+<span id="cb1-6"><a href="#cb1-6"></a><span class="co"># plot</span></span>
+<span id="cb1-7"><a href="#cb1-7"></a>cement_production <span class="sc">|&gt;</span> <span class="fu">autoplot</span>(Cement) <span class="sc">+</span></span>
+<span id="cb1-8"><a href="#cb1-8"></a>  <span class="fu">labs</span>(</span>
+<span id="cb1-9"><a href="#cb1-9"></a>    <span class="at">title =</span> <span class="st">"Cement Production in Australia"</span>,</span>
+<span id="cb1-10"><a href="#cb1-10"></a>    <span class="at">subtitle =</span> <span class="st">"Volume of portland cement in megatonnes"</span>,</span>
+<span id="cb1-11"><a href="#cb1-11"></a>    <span class="at">y =</span> <span class="st">"Volume"</span>,</span>
+<span id="cb1-12"><a href="#cb1-12"></a>    <span class="at">caption =</span> <span class="st">"Source: Australian Bureau of Statistics (via tsibbledata::aus_production)"</span></span>
+<span id="cb1-13"><a href="#cb1-13"></a>  ) <span class="sc">+</span></span>
+<span id="cb1-14"><a href="#cb1-14"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"steelblue"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-portland-cement-ts" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-portland-cement-ts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Assignment2_files/figure-html/fig-portland-cement-ts-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-portland-cement-ts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Quarterly estimates of portland cement production in millions of tonnes.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<blockquote class="blockquote">
+<p><a href="#fig-portland-cement-ts" class="quarto-xref">Figure&nbsp;1</a> reveals the following observations:</p>
+<ul>
+<li>Australian cement production volumes show an increasing trend with seasonal cycles.</li>
+<li>The variance in the seasonal cycles increase with the level of the series.</li>
+<li>Moreover, the seasonal pattern seems to change post-1980 characterized by large drops in cement production after a few years.</li>
+</ul>
+</blockquote>
+<section id="guerreros-method-for-box-cox-lambda-selection" class="level2">
+<h2 class="anchored" data-anchor-id="guerreros-method-for-box-cox-lambda-selection">Guerrero’s method for Box-Cox lambda selection</h2>
+<p>The <code>guerrero</code> feature from the <code>fabletools</code> package can be used to choose a value of lambda which can assist in selecting a variance-stabilizing transformation (<a href="https://onlinelibrary.wiley.com/doi/10.1002/for.3980120104">Guerrero, 1993</a>). We apply the Guerrero’s method below:</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="co"># Estimate optimal Box-Cox lambda using Guerrero's method</span></span>
+<span id="cb2-2"><a href="#cb2-2"></a>cement_lambda <span class="ot">&lt;-</span> cement_production <span class="sc">|&gt;</span></span>
+<span id="cb2-3"><a href="#cb2-3"></a>  <span class="fu">features</span>(Cement, <span class="at">features =</span> guerrero) <span class="sc">|&gt;</span></span>
+<span id="cb2-4"><a href="#cb2-4"></a>  <span class="fu">pull</span>(lambda_guerrero)</span>
+<span id="cb2-5"><a href="#cb2-5"></a></span>
+<span id="cb2-6"><a href="#cb2-6"></a>cement_lambda</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -0.309022</code></pre>
+</div>
+</div>
+<blockquote class="blockquote">
+<p><strong>Interpretation</strong>:</p>
+<ul>
+<li>The parameter estimated using Guerrero’s method is <span class="math inline">\(\lambda \approx\)</span> -0.309.</li>
+<li>This indicates that a transformation between an inverse square root <span class="math inline">\(\left(\frac{1}{\sqrt{y}}\right)\)</span> and an inverse cube root <span class="math inline">\(\left(\frac{1}{\sqrt[3]{y}}\right)\)</span> is optimal to stabilise the variance in the seasonal cycles.</li>
+</ul>
+</blockquote>
+</section>
+<section id="applying-a-box-cox-transformation" class="level2">
+<h2 class="anchored" data-anchor-id="applying-a-box-cox-transformation">Applying a Box-Cox Transformation</h2>
+<p>Box-Cox transformations are a useful family of transformations, that includes both logarithmic and power transformations. <a href="#fig-cement-box-cox-ts" class="quarto-xref">Figure&nbsp;2</a> shows the tranformed cement production volumes using a Box-Cox with <span class="math inline">\(\lambda \approx\)</span> -0.309. It shows that the variance of the series is stable as the level of the series increases. Moreover, we can still can see the large drops that characterize the change in the seasonal pattern post-1982.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="co"># plot</span></span>
+<span id="cb4-2"><a href="#cb4-2"></a>cement_production <span class="sc">|&gt;</span> <span class="fu">autoplot</span>(<span class="fu">box_cox</span>(Cement, cement_lambda)) <span class="sc">+</span></span>
+<span id="cb4-3"><a href="#cb4-3"></a>  <span class="fu">labs</span>(</span>
+<span id="cb4-4"><a href="#cb4-4"></a>    <span class="at">title =</span> <span class="st">"Cement Production in Australia"</span>,</span>
+<span id="cb4-5"><a href="#cb4-5"></a>    <span class="at">subtitle =</span> <span class="fu">TeX</span>(<span class="fu">paste0</span>(</span>
+<span id="cb4-6"><a href="#cb4-6"></a>      <span class="st">"Variance stabilisation via Box-Cox: $</span><span class="sc">\\</span><span class="st">lambda </span><span class="sc">\\</span><span class="st">approx "</span>, <span class="fu">round</span>(cement_lambda, <span class="dv">3</span>), <span class="st">"$"</span></span>
+<span id="cb4-7"><a href="#cb4-7"></a>    )),</span>
+<span id="cb4-8"><a href="#cb4-8"></a>    <span class="at">y =</span> <span class="st">"Box-Cox (Volume)"</span></span>
+<span id="cb4-9"><a href="#cb4-9"></a>  ) <span class="sc">+</span></span>
+<span id="cb4-10"><a href="#cb4-10"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"steelblue"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-cement-box-cox-ts" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cement-box-cox-ts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Assignment2_files/figure-html/fig-cement-box-cox-ts-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cement-box-cox-ts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Quarterly estimates of portland cement production transformed via Box-Cox
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="decomposition-using-stl-and-x-11" class="level2">
+<h2 class="anchored" data-anchor-id="decomposition-using-stl-and-x-11">Decomposition using STL and X-11</h2>
+<p>Timeseries decomposition methods break down a series into its constituent components specifically, its trend-cycle, seasonal, and remainder components. <a href="#fig-cement-stl-dcmp" class="quarto-xref">Figure&nbsp;3</a> and <a href="#fig-cement-x11-dcmp" class="quarto-xref">Figure&nbsp;4</a> show the decomposition of the transformed cement production volumes into the three components.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="co"># Perform STL decomposition</span></span>
+<span id="cb5-2"><a href="#cb5-2"></a>cement_stl_dcmp <span class="ot">&lt;-</span> cement_production <span class="sc">|&gt;</span></span>
+<span id="cb5-3"><a href="#cb5-3"></a>  <span class="fu">model</span>(</span>
+<span id="cb5-4"><a href="#cb5-4"></a>    <span class="at">stl =</span> <span class="fu">STL</span>(<span class="fu">box_cox</span>(Cement, cement_lambda))</span>
+<span id="cb5-5"><a href="#cb5-5"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb5-6"><a href="#cb5-6"></a>  <span class="fu">components</span>()</span>
+<span id="cb5-7"><a href="#cb5-7"></a></span>
+<span id="cb5-8"><a href="#cb5-8"></a><span class="co"># Plot Trend, Seasonality, and Remainder</span></span>
+<span id="cb5-9"><a href="#cb5-9"></a></span>
+<span id="cb5-10"><a href="#cb5-10"></a>cement_stl_dcmp <span class="sc">|&gt;</span></span>
+<span id="cb5-11"><a href="#cb5-11"></a>  <span class="fu">autoplot</span>(<span class="at">color =</span> <span class="st">"steelblue"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb5-12"><a href="#cb5-12"></a>  <span class="fu">labs</span>(</span>
+<span id="cb5-13"><a href="#cb5-13"></a>    <span class="at">title =</span> <span class="st">"STL decomposition: Transformed Cement Production Volume"</span>,</span>
+<span id="cb5-14"><a href="#cb5-14"></a>    <span class="at">caption =</span> <span class="fu">TeX</span>(<span class="fu">paste0</span>(</span>
+<span id="cb5-15"><a href="#cb5-15"></a>      <span class="st">"Variance stabilisation via Box-Cox: $</span><span class="sc">\\</span><span class="st">lambda </span><span class="sc">\\</span><span class="st">approx "</span>, <span class="fu">round</span>(cement_lambda, <span class="dv">3</span>), <span class="st">"$"</span></span>
+<span id="cb5-16"><a href="#cb5-16"></a>    )),</span>
+<span id="cb5-17"><a href="#cb5-17"></a>  ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-cement-stl-dcmp" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cement-stl-dcmp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Assignment2_files/figure-html/fig-cement-stl-dcmp-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cement-stl-dcmp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: STL decomposition of the Box-Cox Transformed Cement Production Volume
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="co"># Perform X-11 Decomposition</span></span>
+<span id="cb6-2"><a href="#cb6-2"></a>cement_x11_dcmp <span class="ot">&lt;-</span> cement_production <span class="sc">|&gt;</span></span>
+<span id="cb6-3"><a href="#cb6-3"></a>  <span class="fu">model</span>(</span>
+<span id="cb6-4"><a href="#cb6-4"></a>    <span class="at">x11 =</span> <span class="fu">X_13ARIMA_SEATS</span>(<span class="fu">box_cox</span>(Cement, cement_lambda) <span class="sc">~</span> <span class="fu">x11</span>())</span>
+<span id="cb6-5"><a href="#cb6-5"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb6-6"><a href="#cb6-6"></a>  <span class="fu">components</span>()</span>
+<span id="cb6-7"><a href="#cb6-7"></a></span>
+<span id="cb6-8"><a href="#cb6-8"></a><span class="co"># Plot  Trend, Seasonality, and Remainder</span></span>
+<span id="cb6-9"><a href="#cb6-9"></a>cement_x11_dcmp <span class="sc">|&gt;</span></span>
+<span id="cb6-10"><a href="#cb6-10"></a>  <span class="fu">autoplot</span>(<span class="at">color =</span> <span class="st">"steelblue"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb6-11"><a href="#cb6-11"></a>  <span class="fu">labs</span>(</span>
+<span id="cb6-12"><a href="#cb6-12"></a>    <span class="at">title =</span> <span class="st">"X-11 decomposition: Transformed Cement Production Volume"</span>,</span>
+<span id="cb6-13"><a href="#cb6-13"></a>    <span class="at">caption =</span> <span class="fu">TeX</span>(<span class="fu">paste0</span>(</span>
+<span id="cb6-14"><a href="#cb6-14"></a>      <span class="st">"Variance stabilisation via Box-Cox: $</span><span class="sc">\\</span><span class="st">lambda </span><span class="sc">\\</span><span class="st">approx "</span>, <span class="fu">round</span>(cement_lambda, <span class="dv">3</span>), <span class="st">"$"</span></span>
+<span id="cb6-15"><a href="#cb6-15"></a>    )),</span>
+<span id="cb6-16"><a href="#cb6-16"></a>  ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-cement-x11-dcmp" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cement-x11-dcmp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Assignment2_files/figure-html/fig-cement-x11-dcmp-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cement-x11-dcmp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: X-11 decomposition of the Box-Cox Transformed Cement Production Volume
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<blockquote class="blockquote">
+<p><strong>Comparison: STL and X-11 Decomposition</strong></p>
+<ul>
+<li><strong>Trend Component:</strong> The trend estimated by <a href="#fig-cement-stl-dcmp" class="quarto-xref">Figure&nbsp;3</a> (STL) is smoother and more flexible compared to that in <a href="#fig-cement-x11-dcmp" class="quarto-xref">Figure&nbsp;4</a> (X-11), which may reflect the underlying design of STL to better capture gradual, nonlinear trend changes.</li>
+<li><strong>Seasonal Component:</strong> Both methods allow for time-varying seasonality, although STL achieves this through local smoothing, while X-11 uses moving averages and filters rooted in seasonal adjustment procedures from official statistics. In this case, both methods yield similar seasonal patterns.</li>
+<li><strong>Remainder Component:</strong> The remainder (or residual) series in both decompositions appear to be mean-zero and roughly homoscedastic, suggesting good model fit. However, the remainder from <a href="#fig-cement-x11-dcmp" class="quarto-xref">Figure&nbsp;4</a> displays lower variance, implying X-11 may have captured more structure in the data, leaving behind a more stable residual. In contrast, <a href="#fig-cement-stl-dcmp" class="quarto-xref">Figure&nbsp;3</a> shows slightly larger fluctuations in the remainder, which might indicate some noise or local patterns not fully explained.</li>
+</ul>
+</blockquote>
+<p>Overall, STL provides more robustness to outliers and flexibility in modeling local trends, making it well-suited for exploratory decomposition. X-11, while more rigid, offers sharper residuals and remains a cornerstone in official statistics due to its interpretability and historical pedigree.</p>
+</section>
+</section>
+<section id="monthly-business-class-airline-passengers" class="level1">
+<h1>Monthly Business Class Airline Passengers</h1>
+<p>The <code>ansett</code> data from the <code>tsibbledata</code> package contains weekly counts of air passengers who traveled with <a href="https://en.wikipedia.org/wiki/Ansett_Australia">Ansett Airways</a>. For this analysis, we focus specifically on Business class passengers travelling between Adelaide and Perth, in either direction. Our goal is to analyze the monthly passenger flows between the two cities.</p>
+<p>To control for calendar-related variation, such as the differing number of weeks across months, we compute the average weekly passenger count per month. This normalization corrects for temporal distortions and enables a cleaner analysis of trend and seasonality. The adjusted time series is shown in <a href="#fig-ansett-data-monthly" class="quarto-xref">Figure&nbsp;5</a>.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>adl_perth <span class="ot">&lt;-</span> ansett <span class="sc">|&gt;</span></span>
+<span id="cb7-2"><a href="#cb7-2"></a>  <span class="fu">filter</span>(Class <span class="sc">==</span> <span class="st">"Business"</span>, Airports <span class="sc">==</span> <span class="st">"ADL-PER"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb7-3"><a href="#cb7-3"></a>  <span class="fu">index_by</span>(<span class="at">Month =</span> <span class="fu">yearmonth</span>(Week)) <span class="sc">|&gt;</span> <span class="co"># Group by month</span></span>
+<span id="cb7-4"><a href="#cb7-4"></a>  <span class="fu">summarise</span>(<span class="at">Passengers =</span> <span class="fu">mean</span>(Passengers))  <span class="co"># sum the passengers</span></span>
+<span id="cb7-5"><a href="#cb7-5"></a></span>
+<span id="cb7-6"><a href="#cb7-6"></a><span class="co"># plot</span></span>
+<span id="cb7-7"><a href="#cb7-7"></a>adl_perth <span class="sc">|&gt;</span> <span class="fu">autoplot</span>(Passengers) <span class="sc">+</span></span>
+<span id="cb7-8"><a href="#cb7-8"></a>  <span class="fu">labs</span>(</span>
+<span id="cb7-9"><a href="#cb7-9"></a>    <span class="at">title =</span> <span class="st">"Average Monthly Business Class Passengers"</span>,</span>
+<span id="cb7-10"><a href="#cb7-10"></a>    <span class="at">subtitle =</span> <span class="st">"Adelaide to Perth"</span>,</span>
+<span id="cb7-11"><a href="#cb7-11"></a>    <span class="at">y =</span> <span class="st">"Passengers"</span>,</span>
+<span id="cb7-12"><a href="#cb7-12"></a>    <span class="at">caption =</span> <span class="st">"Source: Ansett Airlines (which no longer exists). (via tsibbledata::ansett)"</span></span>
+<span id="cb7-13"><a href="#cb7-13"></a>  ) <span class="sc">+</span></span>
+<span id="cb7-14"><a href="#cb7-14"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"steelblue"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-ansett-data-monthly" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ansett-data-monthly-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Assignment2_files/figure-html/fig-ansett-data-monthly-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ansett-data-monthly-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: Average monthly business class passengers between Adelaide and Perth via Ansett Airways.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<blockquote class="blockquote">
+<p><a href="#fig-ansett-data-monthly" class="quarto-xref">Figure&nbsp;5</a> shows no discernible long-term trend in average monthly passenger counts. However, a seasonal pattern is evident, particularly the consistent dip observed in January of each year, likely reflecting lower business travel during the summer holiday period. Additionally, the presence of months with zero passengers corresponds to the <a href="https://en.wikipedia.org/wiki/1989_Australian_pilots%27_dispute">1989 Australian pilots’ industrial dispute</a>, which caused widespread flight disruptions.</p>
+</blockquote>
+<p>The time series contains zero values (months with no recorded passengers), we add 1 to all observations prior to transformation to avoid taking the logarithm or root of zero - this avoids domain issues while preserving the temporal structure required for STL and X-11 decomposition.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>adl_perth <span class="ot">&lt;-</span> adl_perth <span class="sc">|&gt;</span></span>
+<span id="cb8-2"><a href="#cb8-2"></a>  <span class="fu">mutate</span>(<span class="at">Passengers_Adj =</span> Passengers <span class="sc">+</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<section id="box-cox-transformation-via-guerreros-method" class="level2">
+<h2 class="anchored" data-anchor-id="box-cox-transformation-via-guerreros-method">Box-Cox Transformation via Guerrero’s Method</h2>
+<p>To explore whether a variance-stabilizing transformation is appropriate, we use Guerrero’s method. The Box-Cox parameter is estimated as follows:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="co"># Estimate optimal Box-Cox lambda using Guerrero's method</span></span>
+<span id="cb9-2"><a href="#cb9-2"></a>ansett_lambda <span class="ot">&lt;-</span> adl_perth <span class="sc">|&gt;</span></span>
+<span id="cb9-3"><a href="#cb9-3"></a>  <span class="fu">features</span>(Passengers_Adj, <span class="at">features =</span> guerrero) <span class="sc">|&gt;</span></span>
+<span id="cb9-4"><a href="#cb9-4"></a>  <span class="fu">pull</span>(lambda_guerrero)</span>
+<span id="cb9-5"><a href="#cb9-5"></a></span>
+<span id="cb9-6"><a href="#cb9-6"></a>ansett_lambda</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -0.8999268</code></pre>
+</div>
+</div>
+<blockquote class="blockquote">
+<p><strong>Interpretation</strong>:</p>
+<ul>
+<li>The estimated parameter <span class="math inline">\(\lambda \approx\)</span> -0.9 suggests a transformation close to an inverse 9th root <span class="math inline">\(\left(\frac{1}{\sqrt[9]{y}}\right)\)</span> , indicating that the original series exhibits non-constant variance.</li>
+<li>However, <a href="#fig-ansett-data-monthly" class="quarto-xref">Figure&nbsp;5</a> does not reveal any visible relationship between the level of the series and the seasonal variation, implying that variance stabilization may not be necessary in this case.</li>
+</ul>
+</blockquote>
+<p>That said, for completeness and to satisfy the formal analysis requirements, we proceed with the Box-Cox transformation.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="co"># plot</span></span>
+<span id="cb11-2"><a href="#cb11-2"></a>adl_perth <span class="sc">|&gt;</span> <span class="fu">autoplot</span>(<span class="fu">box_cox</span>(Passengers_Adj, ansett_lambda)) <span class="sc">+</span></span>
+<span id="cb11-3"><a href="#cb11-3"></a>  <span class="fu">labs</span>(</span>
+<span id="cb11-4"><a href="#cb11-4"></a>    <span class="at">title =</span> <span class="st">"Average Monthly Business Class Passengers: Adelaide to Perth"</span>,</span>
+<span id="cb11-5"><a href="#cb11-5"></a>     <span class="at">subtitle =</span> <span class="fu">TeX</span>(<span class="fu">paste0</span>(</span>
+<span id="cb11-6"><a href="#cb11-6"></a>      <span class="st">"Variance stabilisation via Box-Cox: $</span><span class="sc">\\</span><span class="st">lambda </span><span class="sc">\\</span><span class="st">approx "</span>, <span class="fu">round</span>(ansett_lambda, <span class="dv">3</span>), <span class="st">"$"</span></span>
+<span id="cb11-7"><a href="#cb11-7"></a>    )),</span>
+<span id="cb11-8"><a href="#cb11-8"></a>    <span class="at">y =</span> <span class="st">"Box-Cox(Passengers)"</span></span>
+<span id="cb11-9"><a href="#cb11-9"></a>  ) <span class="sc">+</span></span>
+<span id="cb11-10"><a href="#cb11-10"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"steelblue"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-ansett-box-cox" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ansett-box-cox-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Assignment2_files/figure-html/fig-ansett-box-cox-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ansett-box-cox-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: Average monthly business class passengers travelling between Adelaide and Perth transformed via Box-Cox
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="decomposition-using-stl-and-x-11-1" class="level2">
+<h2 class="anchored" data-anchor-id="decomposition-using-stl-and-x-11-1">Decomposition using STL and X-11</h2>
+<p>We know there were months with zero passengers travelling these are expected to be outliers so we set <code>robust=TRUE</code> in the STL decomposition so that occasional unusual observations will not affect the estimates of the trend-cycle and seasonal components. They will, however, affect the remainder component.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a><span class="co"># Perform STL decomposition</span></span>
+<span id="cb12-2"><a href="#cb12-2"></a>ansett_stl_dcmp <span class="ot">&lt;-</span> adl_perth <span class="sc">|&gt;</span></span>
+<span id="cb12-3"><a href="#cb12-3"></a>  <span class="fu">model</span>(</span>
+<span id="cb12-4"><a href="#cb12-4"></a>    <span class="at">stl =</span> <span class="fu">STL</span>(<span class="fu">box_cox</span>(Passengers_Adj, ansett_lambda), <span class="at">robust=</span><span class="cn">TRUE</span>)</span>
+<span id="cb12-5"><a href="#cb12-5"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb12-6"><a href="#cb12-6"></a>  <span class="fu">components</span>()</span>
+<span id="cb12-7"><a href="#cb12-7"></a></span>
+<span id="cb12-8"><a href="#cb12-8"></a><span class="co"># Plot Trend, Seasonality, and Remainder</span></span>
+<span id="cb12-9"><a href="#cb12-9"></a></span>
+<span id="cb12-10"><a href="#cb12-10"></a>ansett_stl_dcmp <span class="sc">|&gt;</span></span>
+<span id="cb12-11"><a href="#cb12-11"></a>  <span class="fu">autoplot</span>(<span class="at">color =</span> <span class="st">"steelblue"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb12-12"><a href="#cb12-12"></a>  <span class="fu">labs</span>(</span>
+<span id="cb12-13"><a href="#cb12-13"></a>    <span class="at">title =</span> <span class="st">"STL decomposition of Business Class Passengers: Adelaide to Perth"</span>,</span>
+<span id="cb12-14"><a href="#cb12-14"></a>        <span class="at">caption =</span> <span class="fu">TeX</span>(<span class="fu">paste0</span>(</span>
+<span id="cb12-15"><a href="#cb12-15"></a>      <span class="st">"Variance stabilisation via Box-Cox: $</span><span class="sc">\\</span><span class="st">lambda </span><span class="sc">\\</span><span class="st">approx "</span>, <span class="fu">round</span>(ansett_lambda, <span class="dv">3</span>), <span class="st">"$"</span></span>
+<span id="cb12-16"><a href="#cb12-16"></a>    )),</span>
+<span id="cb12-17"><a href="#cb12-17"></a>  ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-ansett-stl-dcmp" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ansett-stl-dcmp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Assignment2_files/figure-html/fig-ansett-stl-dcmp-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ansett-stl-dcmp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: STL decomposition of the Box-Cox Transformed Business Class Passengers Adjusted
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The X-11 tends to be highly robust to outliers and level shifts in the time series so no additional configuration is needed.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a><span class="co"># Perform X-11 Decomposition</span></span>
+<span id="cb13-2"><a href="#cb13-2"></a>ansett_x11_dcmp <span class="ot">&lt;-</span> adl_perth <span class="sc">|&gt;</span></span>
+<span id="cb13-3"><a href="#cb13-3"></a>  <span class="fu">model</span>(</span>
+<span id="cb13-4"><a href="#cb13-4"></a>    <span class="at">x11 =</span> <span class="fu">X_13ARIMA_SEATS</span>(<span class="fu">box_cox</span>(Passengers_Adj, ansett_lambda)<span class="sc">~</span> <span class="fu">x11</span>())</span>
+<span id="cb13-5"><a href="#cb13-5"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb13-6"><a href="#cb13-6"></a>  <span class="fu">components</span>()</span>
+<span id="cb13-7"><a href="#cb13-7"></a></span>
+<span id="cb13-8"><a href="#cb13-8"></a><span class="co"># Plot  Trend, Seasonality, and Remainder</span></span>
+<span id="cb13-9"><a href="#cb13-9"></a>ansett_x11_dcmp <span class="sc">|&gt;</span></span>
+<span id="cb13-10"><a href="#cb13-10"></a>  <span class="fu">autoplot</span>(<span class="at">color =</span> <span class="st">"steelblue"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb13-11"><a href="#cb13-11"></a>  <span class="fu">labs</span>(</span>
+<span id="cb13-12"><a href="#cb13-12"></a>    <span class="at">title =</span> <span class="st">"X-11 decomposition of Business Class Passengers: Adelaide to Perth"</span>,</span>
+<span id="cb13-13"><a href="#cb13-13"></a>      <span class="at">caption =</span> <span class="fu">TeX</span>(<span class="fu">paste0</span>(</span>
+<span id="cb13-14"><a href="#cb13-14"></a>      <span class="st">"Variance stabilisation via Box-Cox: $</span><span class="sc">\\</span><span class="st">lambda </span><span class="sc">\\</span><span class="st">approx "</span>, <span class="fu">round</span>(ansett_lambda, <span class="dv">3</span>), <span class="st">"$"</span></span>
+<span id="cb13-15"><a href="#cb13-15"></a>    )),</span>
+<span id="cb13-16"><a href="#cb13-16"></a>  ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-ansett-x11-dcmp" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ansett-x11-dcmp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Assignment2_files/figure-html/fig-ansett-x11-dcmp-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ansett-x11-dcmp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8: X-11 decomposition of the Box-Cox Transformed Business Class Passengers Adjusted
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<blockquote class="blockquote">
+<p><strong>Comparison: STL and X-11 Decomposition</strong></p>
+<ul>
+<li><strong>Trend Component:</strong> The trend estimated by <a href="#fig-ansett-stl-dcmp" class="quarto-xref">Figure&nbsp;7</a> (STL) is smoother compared to that in <a href="#fig-ansett-x11-dcmp" class="quarto-xref">Figure&nbsp;8</a> (X-11).</li>
+<li><strong>Seasonal Component:</strong> Both methods capture the same seasonal pattern.</li>
+<li><strong>Remainder Component:</strong> Both methods capture similar remainder components.</li>
+</ul>
+</blockquote>
+</section>
+</section>
+<section id="annual-south-african-exports" class="level1">
+<h1>Annual South African Exports</h1>
+<p>The <code>global_economy</code> data from the <code>tsibbledata</code> package contains annual economic indicators published by the World Bank, spanning the period 1960 to 2017. For this analysis, we focus on the <code>Exports</code> variable, , which measures exports of goods and services as a percentage of GDP.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1"></a>za_exports <span class="ot">&lt;-</span> global_economy <span class="sc">|&gt;</span></span>
+<span id="cb14-2"><a href="#cb14-2"></a>  <span class="fu">filter</span>(Country <span class="sc">==</span> <span class="st">"South Africa"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb14-3"><a href="#cb14-3"></a>  <span class="fu">select</span>(Year, Exports)</span>
+<span id="cb14-4"><a href="#cb14-4"></a></span>
+<span id="cb14-5"><a href="#cb14-5"></a>za_exports <span class="sc">|&gt;</span></span>
+<span id="cb14-6"><a href="#cb14-6"></a>  <span class="fu">autoplot</span>(Exports, <span class="at">color =</span> <span class="st">"steelblue"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb14-7"><a href="#cb14-7"></a>  <span class="fu">labs</span>(</span>
+<span id="cb14-8"><a href="#cb14-8"></a>    <span class="at">title =</span> <span class="st">"South African Exports: 1960–2017"</span>,</span>
+<span id="cb14-9"><a href="#cb14-9"></a>    <span class="at">x =</span> <span class="st">"Year"</span>,</span>
+<span id="cb14-10"><a href="#cb14-10"></a>    <span class="at">y =</span> <span class="st">"% of GDP"</span>,</span>
+<span id="cb14-11"><a href="#cb14-11"></a>    <span class="at">caption =</span> <span class="st">"Source: World Bank (via tsibbledata::global_economy)"</span></span>
+<span id="cb14-12"><a href="#cb14-12"></a>  ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-za-exports-data" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-za-exports-data-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Assignment2_files/figure-html/fig-za-exports-data-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-za-exports-data-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9: Exports of goods and services from South Africa from 1960 to 2017.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><a href="#fig-za-exports-data" class="quarto-xref">Figure&nbsp;9</a> - South African exports, as a share of GDP, do not display a consistent upward or downward trend, nor any discernible seasonal pattern — which is expected given the annual frequency of the data.</p>
+<section id="stl-decomposition" class="level2">
+<h2 class="anchored" data-anchor-id="stl-decomposition">STL Decomposition</h2>
+<p>To analyze long-term patterns, we apply STL decomposition to the export series. Since the data is annual, STL can only extract the trend and remainder components — the seasonal component is not estimated, as STL (and methods like X-11) require higher-frequency data to isolate seasonality.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a>za_exports_stl_dcmp <span class="ot">&lt;-</span> za_exports <span class="sc">|&gt;</span></span>
+<span id="cb15-2"><a href="#cb15-2"></a>  <span class="fu">model</span>(</span>
+<span id="cb15-3"><a href="#cb15-3"></a>    <span class="at">stl =</span> <span class="fu">STL</span>(Exports,<span class="at">robust =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb15-4"><a href="#cb15-4"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb15-5"><a href="#cb15-5"></a>  <span class="fu">components</span>()</span>
+<span id="cb15-6"><a href="#cb15-6"></a></span>
+<span id="cb15-7"><a href="#cb15-7"></a>za_exports_stl_dcmp <span class="sc">|&gt;</span></span>
+<span id="cb15-8"><a href="#cb15-8"></a>  <span class="fu">autoplot</span>(<span class="at">color =</span> <span class="st">"steelblue"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb15-9"><a href="#cb15-9"></a>  <span class="fu">labs</span>(</span>
+<span id="cb15-10"><a href="#cb15-10"></a>    <span class="at">title =</span> <span class="st">"STL Decomposition of South African Exports"</span>,</span>
+<span id="cb15-11"><a href="#cb15-11"></a>  ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-za-exports-dcmp" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-za-exports-dcmp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Assignment2_files/figure-html/fig-za-exports-dcmp-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-za-exports-dcmp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10: STL decomposition of South African exports as a percentage of GDP, showing trend and remainder components for annual data.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><a href="#fig-za-exports-dcmp" class="quarto-xref">Figure&nbsp;10</a> - The trend-cycle reveals medium-term fluctuations, but no repeating seasonal effects — highlighting that trend analysis is more suitable than seasonal decomposition in this context.</p>
+</section>
+<section id="fitting-exponential-smoothing-models" class="level2">
+<h2 class="anchored" data-anchor-id="fitting-exponential-smoothing-models">Fitting Exponential Smoothing Models</h2>
+<p>To assess the forecasting performance of exponential smoothing methods, we split the series into a training set (years before 2013) and a test set (2013 to 2017). We fit the following models:</p>
+<ul>
+<li>ETS(A,N,N): Simple exponential smoothing with additive errors, no trend or seasonality.</li>
+<li>ETS(A,A,N): Exponential smoothing with additive errors and additive trend, no seasonality.</li>
+</ul>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1"></a>za_ets_fit <span class="ot">&lt;-</span> za_exports <span class="sc">|&gt;</span></span>
+<span id="cb16-2"><a href="#cb16-2"></a>  <span class="fu">filter</span>(Year <span class="sc">&lt;</span> <span class="dv">2013</span>) <span class="sc">|&gt;</span></span>
+<span id="cb16-3"><a href="#cb16-3"></a>  <span class="fu">model</span>(</span>
+<span id="cb16-4"><a href="#cb16-4"></a>    <span class="at">ANN =</span> <span class="fu">ETS</span>(Exports <span class="sc">~</span> <span class="fu">error</span>(<span class="st">"A"</span>) <span class="sc">+</span> <span class="fu">trend</span>(<span class="st">"N"</span>) <span class="sc">+</span> <span class="fu">season</span>(<span class="st">"N"</span>)),</span>
+<span id="cb16-5"><a href="#cb16-5"></a>    <span class="at">AAN =</span> <span class="fu">ETS</span>(Exports <span class="sc">~</span> <span class="fu">error</span>(<span class="st">"A"</span>) <span class="sc">+</span> <span class="fu">trend</span>(<span class="st">"A"</span>) <span class="sc">+</span> <span class="fu">season</span>(<span class="st">"N"</span>)),</span>
+<span id="cb16-6"><a href="#cb16-6"></a>  )</span>
+<span id="cb16-7"><a href="#cb16-7"></a></span>
+<span id="cb16-8"><a href="#cb16-8"></a><span class="co"># Get Coefficients</span></span>
+<span id="cb16-9"><a href="#cb16-9"></a><span class="fu">tidy</span>(za_ets_fit) <span class="sc">|&gt;</span></span>
+<span id="cb16-10"><a href="#cb16-10"></a>  <span class="fu">spread</span>(.model, estimate) <span class="sc">|&gt;</span></span>
+<span id="cb16-11"><a href="#cb16-11"></a>  <span class="fu">kbl</span>() <span class="sc">|&gt;</span>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="fu">c</span>(<span class="st">"striped"</span>, <span class="st">"hover"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div id="tbl-za-exports-fit" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-za-exports-fit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Model coefficients
+</figcaption>
+<div aria-describedby="tbl-za-exports-fit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="table table-striped table-hover do-not-create-environment cell caption-top table-sm small" data-quarto-postprocess="true">
+<thead>
+<tr class="header">
+<th style="text-align: left;" data-quarto-table-cell-role="th">term</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">AAN</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">ANN</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">alpha</td>
+<td style="text-align: right;">0.9998998</td>
+<td style="text-align: right;">0.9998994</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">b[0]</td>
+<td style="text-align: right;">-0.0357063</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">beta</td>
+<td style="text-align: right;">0.0001000</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">l[0]</td>
+<td style="text-align: right;">28.4104655</td>
+<td style="text-align: right;">29.5515734</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p><a href="#tbl-za-exports-fit" class="quarto-xref">Table&nbsp;1</a> - The ANN model assumes no trend, while the AAN model includes a slope (b[0]) and a smoothing parameter for the trend (beta). <a href="#fig-za-exports-train-fit" class="quarto-xref">Figure&nbsp;11</a> shows that both exponential smoothing models with trend capture the same pattern on the training dataset.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a>za_exports <span class="sc">|&gt;</span></span>
+<span id="cb17-2"><a href="#cb17-2"></a>  <span class="fu">filter</span>(Year <span class="sc">&lt;</span> <span class="dv">2013</span>) <span class="sc">|&gt;</span></span>
+<span id="cb17-3"><a href="#cb17-3"></a>  <span class="fu">autoplot</span>(Exports) <span class="sc">+</span></span>
+<span id="cb17-4"><a href="#cb17-4"></a>  <span class="fu">autolayer</span>(<span class="fu">fitted</span>(za_ets_fit), <span class="at">.vars =</span> .fitted, <span class="at">linewidth =</span> <span class="dv">1</span>, <span class="at">alpha =</span> <span class="fl">0.8</span>) <span class="sc">+</span></span>
+<span id="cb17-5"><a href="#cb17-5"></a>  <span class="fu">labs</span>(</span>
+<span id="cb17-6"><a href="#cb17-6"></a>    <span class="at">title =</span> <span class="st">"Fitted ETS Models on South African Exports"</span>,</span>
+<span id="cb17-7"><a href="#cb17-7"></a>    <span class="at">y =</span> <span class="st">"% of GDP"</span>,</span>
+<span id="cb17-8"><a href="#cb17-8"></a>    <span class="at">x =</span> <span class="st">"Year"</span></span>
+<span id="cb17-9"><a href="#cb17-9"></a>  ) <span class="sc">+</span></span>
+<span id="cb17-10"><a href="#cb17-10"></a>  <span class="fu">guides</span>(<span class="at">color =</span> <span class="st">"none"</span>) <span class="sc">+</span></span>
+<span id="cb17-11"><a href="#cb17-11"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> .model, <span class="at">ncol =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-za-exports-train-fit" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-za-exports-train-fit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Assignment2_files/figure-html/fig-za-exports-train-fit-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-za-exports-train-fit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11: Fitted values from ETS models (ANN and AAN) faceted vertically by model, overlaid on South African export data for the training period (pre-2013).
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="model-evaluation" class="level2">
+<h2 class="anchored" data-anchor-id="model-evaluation">Model Evaluation</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1"></a>za_ets_fc <span class="ot">&lt;-</span> za_ets_fit <span class="sc">|&gt;</span> </span>
+<span id="cb18-2"><a href="#cb18-2"></a>  <span class="fu">forecast</span>(<span class="at">h =</span> <span class="dv">5</span> )</span>
+<span id="cb18-3"><a href="#cb18-3"></a></span>
+<span id="cb18-4"><a href="#cb18-4"></a><span class="co"># Accuracy for both train and test sets</span></span>
+<span id="cb18-5"><a href="#cb18-5"></a>za_exports_accuracy <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(</span>
+<span id="cb18-6"><a href="#cb18-6"></a>  <span class="fu">accuracy</span>(za_ets_fit),   <span class="co"># Training             </span></span>
+<span id="cb18-7"><a href="#cb18-7"></a>  <span class="fu">accuracy</span>( za_ets_fc, </span>
+<span id="cb18-8"><a href="#cb18-8"></a>            za_exports <span class="sc">|&gt;</span> <span class="fu">filter</span>(Year <span class="sc">&gt;=</span> <span class="dv">2013</span>) )  <span class="co"># Test</span></span>
+<span id="cb18-9"><a href="#cb18-9"></a>) </span>
+<span id="cb18-10"><a href="#cb18-10"></a>  </span>
+<span id="cb18-11"><a href="#cb18-11"></a>za_exports_accuracy <span class="sc">|&gt;</span> </span>
+<span id="cb18-12"><a href="#cb18-12"></a>  <span class="fu">select</span>(<span class="at">model =</span> .model, <span class="at">type =</span> .type, RMSE) <span class="sc">|&gt;</span></span>
+<span id="cb18-13"><a href="#cb18-13"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> model, <span class="at">values_from =</span> RMSE) <span class="sc">|&gt;</span></span>
+<span id="cb18-14"><a href="#cb18-14"></a>  <span class="fu">kbl</span>() <span class="sc">|&gt;</span>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="fu">c</span>(<span class="st">"striped"</span>, <span class="st">"hover"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div id="tbl-za-exports-rmse" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-za-exports-rmse-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: Root Mean Squared Error (RMSE) of ETS models (ANN and AAN) evaluated on both training data (1960–2012) and test data (2013–2017).
+</figcaption>
+<div aria-describedby="tbl-za-exports-rmse-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="table table-striped table-hover do-not-create-environment cell caption-top table-sm small" data-quarto-postprocess="true">
+<thead>
+<tr class="header">
+<th style="text-align: left;" data-quarto-table-cell-role="th">type</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">ANN</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">AAN</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Training</td>
+<td style="text-align: right;">2.387155</td>
+<td style="text-align: right;">2.393041</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Test</td>
+<td style="text-align: right;">1.072079</td>
+<td style="text-align: right;">1.143415</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p><a href="#tbl-za-exports-rmse" class="quarto-xref">Table&nbsp;2</a> compares the RMSE of the two ETS models on both the training and test datasets. While both models exhibit nearly identical performance on the training data, the ANN model achieves a lower RMSE on the test set, suggesting that a simpler exponential smoothing model without a trend component generalizes slightly better to recent export patterns.</p>
+</section>
+<section id="forecast-visualization" class="level2">
+<h2 class="anchored" data-anchor-id="forecast-visualization">Forecast Visualization</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1"></a>za_ets_fit <span class="sc">|&gt;</span> <span class="fu">forecast</span>(<span class="at">h =</span> <span class="dv">5</span>) <span class="sc">|&gt;</span></span>
+<span id="cb19-2"><a href="#cb19-2"></a>  <span class="fu">autoplot</span>(za_exports, <span class="at">level =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb19-3"><a href="#cb19-3"></a>  <span class="fu">labs</span>(</span>
+<span id="cb19-4"><a href="#cb19-4"></a>    <span class="at">title =</span> <span class="st">"Forecasts of South African Exports"</span>,</span>
+<span id="cb19-5"><a href="#cb19-5"></a>    <span class="at">y =</span> <span class="st">"% of GDP"</span></span>
+<span id="cb19-6"><a href="#cb19-6"></a>  ) <span class="sc">+</span></span>
+<span id="cb19-7"><a href="#cb19-7"></a>  <span class="fu">guides</span>(<span class="at">colour =</span> <span class="fu">guide_legend</span>(<span class="at">title =</span> <span class="st">"Forecast"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-za-exports-fc" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-za-exports-fc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Assignment2_files/figure-html/fig-za-exports-fc-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-za-exports-fc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;12: 10-year forecast of South African Exports (% of GDP) using ETS models.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><a href="#fig-za-exports-fc" class="quarto-xref">Figure&nbsp;12</a> shows that the simple exponential smoothing has a “flat” forecast function and the exponential smoothing with trend as a decreasing slope forecast. function.</p>
+</section>
+<section id="prediction-interval-manual-vs-r-calculated" class="level2">
+<h2 class="anchored" data-anchor-id="prediction-interval-manual-vs-r-calculated">95% Prediction Interval (Manual vs R Calculated)</h2>
+<p><a href="#tbl-za-exports-pi-sidebyside" class="quarto-xref">Table&nbsp;3</a> compares the manually computed and R-generated 95% prediction intervals for the 2013 export forecast. Both models yield nearly identical point forecasts, and while the intervals are very similar, the R-generated intervals are slightly wider. This difference arises because R’s forecast intervals are derived from the full forecast distribution, incorporating model-specific uncertainty rather than relying solely on RMSE and normality assumptions. This makes them more appropriate for capturing the full predictive uncertainty, especially over longer horizons or with more complex model dynamics.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1"></a><span class="co"># Compute manual 95% PI from training RMSE</span></span>
+<span id="cb20-2"><a href="#cb20-2"></a>manual_pi <span class="ot">&lt;-</span> za_ets_fc <span class="sc">|&gt;</span></span>
+<span id="cb20-3"><a href="#cb20-3"></a>  <span class="fu">filter</span>(Year <span class="sc">==</span> <span class="dv">2013</span>) <span class="sc">|&gt;</span></span>
+<span id="cb20-4"><a href="#cb20-4"></a>  <span class="fu">as_tibble</span>() <span class="sc">|&gt;</span></span>
+<span id="cb20-5"><a href="#cb20-5"></a>  <span class="fu">select</span>(.model, Year, <span class="at">Forecast =</span> .mean) <span class="sc">|&gt;</span></span>
+<span id="cb20-6"><a href="#cb20-6"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb20-7"><a href="#cb20-7"></a>    za_exports_accuracy <span class="sc">|&gt;</span> </span>
+<span id="cb20-8"><a href="#cb20-8"></a>      <span class="fu">filter</span>(.type <span class="sc">==</span> <span class="st">"Training"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb20-9"><a href="#cb20-9"></a>      <span class="fu">select</span>(.model, RMSE),</span>
+<span id="cb20-10"><a href="#cb20-10"></a>    <span class="at">by =</span> <span class="st">".model"</span></span>
+<span id="cb20-11"><a href="#cb20-11"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb20-12"><a href="#cb20-12"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb20-13"><a href="#cb20-13"></a>    <span class="at">lower_95 =</span> Forecast <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> RMSE,</span>
+<span id="cb20-14"><a href="#cb20-14"></a>    <span class="at">upper_95 =</span> Forecast <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> RMSE</span>
+<span id="cb20-15"><a href="#cb20-15"></a>  )</span>
+<span id="cb20-16"><a href="#cb20-16"></a></span>
+<span id="cb20-17"><a href="#cb20-17"></a><span class="co"># Extract and rename manual intervals</span></span>
+<span id="cb20-18"><a href="#cb20-18"></a>manual_pi_wide <span class="ot">&lt;-</span> manual_pi <span class="sc">|&gt;</span></span>
+<span id="cb20-19"><a href="#cb20-19"></a>  <span class="fu">select</span>(.model, <span class="at">Forecast_manual =</span> Forecast,</span>
+<span id="cb20-20"><a href="#cb20-20"></a>         <span class="at">lower_manual =</span> lower_95, <span class="at">upper_manual =</span> upper_95)</span>
+<span id="cb20-21"><a href="#cb20-21"></a></span>
+<span id="cb20-22"><a href="#cb20-22"></a><span class="co"># Extract and rename R intervals</span></span>
+<span id="cb20-23"><a href="#cb20-23"></a><span class="co"># Extract forecasts for 2013</span></span>
+<span id="cb20-24"><a href="#cb20-24"></a>r_pi_wide <span class="ot">&lt;-</span> za_ets_fc <span class="sc">|&gt;</span></span>
+<span id="cb20-25"><a href="#cb20-25"></a>  <span class="fu">filter</span>(Year <span class="sc">==</span> <span class="dv">2013</span>) <span class="sc">|&gt;</span></span>
+<span id="cb20-26"><a href="#cb20-26"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb20-27"><a href="#cb20-27"></a>    <span class="at">lower_r =</span> <span class="fu">quantile</span>(Exports, <span class="fl">0.025</span>),</span>
+<span id="cb20-28"><a href="#cb20-28"></a>    <span class="at">upper_r =</span> <span class="fu">quantile</span>(Exports, <span class="fl">0.975</span>)</span>
+<span id="cb20-29"><a href="#cb20-29"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb20-30"><a href="#cb20-30"></a>  <span class="fu">as_tibble</span>() <span class="sc">|&gt;</span></span>
+<span id="cb20-31"><a href="#cb20-31"></a>  <span class="fu">select</span>(.model, <span class="at">Forecast_r =</span> .mean, lower_r, upper_r)</span>
+<span id="cb20-32"><a href="#cb20-32"></a></span>
+<span id="cb20-33"><a href="#cb20-33"></a><span class="co"># Combine side-by-side</span></span>
+<span id="cb20-34"><a href="#cb20-34"></a>compare_pi_single_row <span class="ot">&lt;-</span> manual_pi_wide <span class="sc">|&gt;</span></span>
+<span id="cb20-35"><a href="#cb20-35"></a>  <span class="fu">left_join</span>(r_pi_wide, <span class="at">by =</span> <span class="st">".model"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb20-36"><a href="#cb20-36"></a>  <span class="fu">rename</span>(<span class="at">Model =</span> .model)</span>
+<span id="cb20-37"><a href="#cb20-37"></a></span>
+<span id="cb20-38"><a href="#cb20-38"></a><span class="co"># Display in one cell per model</span></span>
+<span id="cb20-39"><a href="#cb20-39"></a>compare_pi_single_row <span class="sc">|&gt;</span></span>
+<span id="cb20-40"><a href="#cb20-40"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb20-41"><a href="#cb20-41"></a>    <span class="at">Manual_PI =</span> <span class="fu">sprintf</span>(<span class="st">"[%.2f, %.2f]"</span>, lower_manual, upper_manual),</span>
+<span id="cb20-42"><a href="#cb20-42"></a>    <span class="at">R_PI =</span> <span class="fu">sprintf</span>(<span class="st">"[%.2f, %.2f]"</span>, lower_r, upper_r)</span>
+<span id="cb20-43"><a href="#cb20-43"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb20-44"><a href="#cb20-44"></a>  <span class="fu">select</span>(Model, <span class="at">Forecast =</span> Forecast_manual, Manual_PI, R_PI) <span class="sc">|&gt;</span></span>
+<span id="cb20-45"><a href="#cb20-45"></a>  <span class="fu">kbl</span>(<span class="at">align =</span> <span class="st">"lccc"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb20-46"><a href="#cb20-46"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="fu">c</span>(<span class="st">"striped"</span>, <span class="st">"hover"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div id="tbl-za-exports-pi-sidebyside" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-za-exports-pi-sidebyside-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3: Side-by-side comparison of 95% prediction intervals for the 2013 forecasts.
+</figcaption>
+<div aria-describedby="tbl-za-exports-pi-sidebyside-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="table table-striped table-hover do-not-create-environment cell caption-top table-sm small" data-quarto-postprocess="true">
+<thead>
+<tr class="header">
+<th style="text-align: left;" data-quarto-table-cell-role="th">Model</th>
+<th style="text-align: center;" data-quarto-table-cell-role="th">Forecast</th>
+<th style="text-align: center;" data-quarto-table-cell-role="th">Manual_PI</th>
+<th style="text-align: center;" data-quarto-table-cell-role="th">R_PI</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">ANN</td>
+<td style="text-align: center;">29.72395</td>
+<td style="text-align: center;">[25.05, 34.40]</td>
+<td style="text-align: center;">[24.95, 34.49]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">AAN</td>
+<td style="text-align: center;">29.68856</td>
+<td style="text-align: center;">[25.00, 34.38]</td>
+<td style="text-align: center;">[24.81, 34.57]</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</section>
+</section>
+<section id="quarterly-international-arrivals-from-the-uk" class="level1">
+<h1>Quarterly International Arrivals from the UK</h1>
+<p>The <code>aus_arrivals</code> dataset contains quarterly international arrival counts to Australia from various countries, spanning from 1981 Q1 to 2012 Q3.</p>
+<p><a href="#fig-uk-arrivals-ts" class="quarto-xref">Figure&nbsp;13</a> shows that international arrivals to Australia from the United Kingdom followed an upward trend from 1981 until around 2005, after which the series displays a gradual decline. The data also exhibits a clear seasonal pattern, with peaks typically occurring in Q4 (likely due to end-of-year travel and holidays) and troughs in Q2 and Q3. The amplitude of this seasonal cycle increases with the level of the series, indicating multiplicative seasonality.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1"></a>arrivals_from_uk <span class="ot">&lt;-</span> aus_arrivals <span class="sc">|&gt;</span></span>
+<span id="cb21-2"><a href="#cb21-2"></a>  <span class="fu">filter</span>(Origin <span class="sc">==</span> <span class="st">"UK"</span>)</span>
+<span id="cb21-3"><a href="#cb21-3"></a></span>
+<span id="cb21-4"><a href="#cb21-4"></a>arrivals_from_uk <span class="sc">|&gt;</span></span>
+<span id="cb21-5"><a href="#cb21-5"></a>  <span class="fu">autoplot</span>(Arrivals, <span class="at">color =</span> <span class="st">"steelblue"</span>) <span class="sc">+</span></span>
+<span id="cb21-6"><a href="#cb21-6"></a>  <span class="fu">labs</span>(</span>
+<span id="cb21-7"><a href="#cb21-7"></a>    <span class="at">title =</span> <span class="st">"UK Arrivals to Australia"</span>,</span>
+<span id="cb21-8"><a href="#cb21-8"></a>    <span class="at">y =</span> <span class="st">"Arrivals (in thousands)"</span>,</span>
+<span id="cb21-9"><a href="#cb21-9"></a>    <span class="at">caption =</span> <span class="st">"Source: Tourism Research Australia."</span></span>
+<span id="cb21-10"><a href="#cb21-10"></a>  ) <span class="sc">+</span></span>
+<span id="cb21-11"><a href="#cb21-11"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="fu">label_number</span>(<span class="at">scale =</span> <span class="fl">1e-3</span>, <span class="at">suffix =</span> <span class="st">"k"</span>))</span>
+<span id="cb21-12"><a href="#cb21-12"></a></span>
+<span id="cb21-13"><a href="#cb21-13"></a><span class="co"># arrivals_from_uk |&gt;</span></span>
+<span id="cb21-14"><a href="#cb21-14"></a><span class="co">#   autoplot(Arrivals, color = "steelblue") +</span></span>
+<span id="cb21-15"><a href="#cb21-15"></a><span class="co">#   labs(</span></span>
+<span id="cb21-16"><a href="#cb21-16"></a><span class="co">#     title = "UK Arrivals to Australia",</span></span>
+<span id="cb21-17"><a href="#cb21-17"></a><span class="co">#     x = "Year",</span></span>
+<span id="cb21-18"><a href="#cb21-18"></a><span class="co">#     y = </span></span>
+<span id="cb21-19"><a href="#cb21-19"></a><span class="co">#   ) </span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-uk-arrivals-ts" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-uk-arrivals-ts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Assignment2_files/figure-html/fig-uk-arrivals-ts-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-uk-arrivals-ts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;13: Quarterly international arrivals to Australia from the UK (1981 Q1 – 2012 Q3).
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<section id="train-test-split" class="level2">
+<h2 class="anchored" data-anchor-id="train-test-split">Train-Test Split</h2>
+<p>We create a training set that withholds the last two years of available data i.e., We fit the model to the training set (1981 Q1–2010 Q3) and forecast the final two years (2010 Q4–2012 Q3).</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1"></a>arrivals_uk_train <span class="ot">&lt;-</span> arrivals_from_uk <span class="sc">|&gt;</span> </span>
+<span id="cb22-2"><a href="#cb22-2"></a>  <span class="fu">filter_index</span>(<span class="st">"1981 Q1"</span> <span class="sc">~</span> <span class="st">"2010 Q3"</span>)  <span class="co"># holds out last 2 years</span></span>
+<span id="cb22-3"><a href="#cb22-3"></a></span>
+<span id="cb22-4"><a href="#cb22-4"></a>arrivals_uk_test <span class="ot">&lt;-</span> arrivals_from_uk <span class="sc">|&gt;</span> </span>
+<span id="cb22-5"><a href="#cb22-5"></a>  <span class="fu">filter_index</span>(<span class="st">"2010 Q4"</span> <span class="sc">~</span> .)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="holt-winters-multiplicative-model" class="level2">
+<h2 class="anchored" data-anchor-id="holt-winters-multiplicative-model">Holt-Winters’ multiplicative model</h2>
+<p>The Holt-Winters multiplicative model is suitable when the seasonal variation increases proportionally with the level of the series, as observed in <a href="#fig-uk-arrivals-ts" class="quarto-xref">Figure&nbsp;13</a> - this behavior—known as multiplicative seasonality — characterized by widening seasonal peaks and troughs over time.</p>
+<p><a href="#fig-uk-arrivals-hwm-fc" class="quarto-xref">Figure&nbsp;14</a> shows forecasts generated by the Holt-Winters’ multiplicative method and the model produces reasonable forcasts that are close to the actual arrival values in the testing set.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1"></a><span class="co"># Fit</span></span>
+<span id="cb23-2"><a href="#cb23-2"></a>hwm_fit <span class="ot">&lt;-</span> arrivals_uk_train <span class="sc">|&gt;</span></span>
+<span id="cb23-3"><a href="#cb23-3"></a>  <span class="fu">model</span>(</span>
+<span id="cb23-4"><a href="#cb23-4"></a>    <span class="at">HWM =</span> <span class="fu">ETS</span>(Arrivals <span class="sc">~</span> <span class="fu">error</span>(<span class="st">"M"</span>) <span class="sc">+</span> <span class="fu">trend</span>(<span class="st">"A"</span>) <span class="sc">+</span> <span class="fu">season</span>(<span class="st">"M"</span>))</span>
+<span id="cb23-5"><a href="#cb23-5"></a>  )</span>
+<span id="cb23-6"><a href="#cb23-6"></a></span>
+<span id="cb23-7"><a href="#cb23-7"></a><span class="co"># Forecast</span></span>
+<span id="cb23-8"><a href="#cb23-8"></a>hwm_fc <span class="ot">&lt;-</span> hwm_fit <span class="sc">|&gt;</span> <span class="fu">forecast</span>(<span class="at">h =</span> <span class="dv">8</span>)</span>
+<span id="cb23-9"><a href="#cb23-9"></a></span>
+<span id="cb23-10"><a href="#cb23-10"></a><span class="co"># Plot</span></span>
+<span id="cb23-11"><a href="#cb23-11"></a>hwm_fc <span class="sc">|&gt;</span> </span>
+<span id="cb23-12"><a href="#cb23-12"></a>  <span class="fu">autoplot</span>(arrivals_from_uk) <span class="sc">+</span></span>
+<span id="cb23-13"><a href="#cb23-13"></a>  <span class="fu">labs</span>(</span>
+<span id="cb23-14"><a href="#cb23-14"></a>    <span class="at">title =</span> <span class="st">"Holt-Winters’ Multiplicative Forecast of UK Arrivals"</span>,</span>
+<span id="cb23-15"><a href="#cb23-15"></a>    <span class="at">x =</span> <span class="st">"Year"</span>,</span>
+<span id="cb23-16"><a href="#cb23-16"></a>    <span class="at">y =</span> <span class="st">"Number of Arrivals"</span>,</span>
+<span id="cb23-17"><a href="#cb23-17"></a>    <span class="at">caption =</span> <span class="st">"Source: Tourism Research Australia"</span></span>
+<span id="cb23-18"><a href="#cb23-18"></a>  ) <span class="sc">+</span></span>
+<span id="cb23-19"><a href="#cb23-19"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="fu">label_number</span>(<span class="at">scale =</span> <span class="fl">1e-3</span>, <span class="at">suffix =</span> <span class="st">"k"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-uk-arrivals-hwm-fc" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-uk-arrivals-hwm-fc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Assignment2_files/figure-html/fig-uk-arrivals-hwm-fc-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-uk-arrivals-hwm-fc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;14: 2-Year forecast of international arrivals to Australia from the UK using Holt-Winters’ multiplicative method.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="forecasting-models-considered" class="level2">
+<h2 class="anchored" data-anchor-id="forecasting-models-considered">Forecasting Models Considered</h2>
+<p>To evaluate the best approach for forecasting UK arrivals, we trained four distinct models on historical data (1981 Q1 – 2010 Q3). Each model incorporates a different strategy for capturing trend and seasonality in the data:</p>
+<ul>
+<li>Seasonal Naïve (<code>SNaive</code>): A simple benchmark model that forecasts each quarter to be equal to the same quarter in the previous year. It captures seasonality but assumes no trend.</li>
+<li>Holt-Winters Multiplicative (<code>HWM</code>): Captures both a changing trend and seasonal patterns whose magnitude grows with the level of the series. This model is well-suited to the observed data and serves as our baseline exponential smoothing method.</li>
+<li>Additive ETS on Log-Transformed Data (<code>ETS_LOG</code>): Applies an exponential smoothing model with additive errors, damped trend, and additive seasonality to log-transformed arrivals. This approach stabilizes variance and can improve forecast reliability for series with exponential growth or volatility.</li>
+<li>STL Decomposition with ETS (<code>STL_ETS</code>): Decomposes the log-transformed series using STL (Seasonal-Trend decomposition using Loess), then fits an ETS model to the seasonally adjusted component. This method provides flexibility in modeling complex seasonality and trend separately.</li>
+</ul>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1"></a>arrivals_uk_fit <span class="ot">&lt;-</span> arrivals_uk_train <span class="sc">|&gt;</span></span>
+<span id="cb24-2"><a href="#cb24-2"></a>  <span class="fu">model</span>(</span>
+<span id="cb24-3"><a href="#cb24-3"></a>    <span class="at">SNaive =</span> <span class="fu">SNAIVE</span>(Arrivals),</span>
+<span id="cb24-4"><a href="#cb24-4"></a>    <span class="at">ETS_LOG =</span> <span class="fu">ETS</span>(<span class="fu">log</span>(Arrivals) <span class="sc">~</span> <span class="fu">error</span>(<span class="st">"A"</span>) <span class="sc">+</span> <span class="fu">trend</span>(<span class="st">"Ad"</span>) <span class="sc">+</span> <span class="fu">season</span>(<span class="st">"A"</span>)),</span>
+<span id="cb24-5"><a href="#cb24-5"></a>    <span class="at">STL_ETS =</span> <span class="fu">decomposition_model</span>(</span>
+<span id="cb24-6"><a href="#cb24-6"></a>      <span class="fu">STL</span>(<span class="fu">log</span>(Arrivals)),</span>
+<span id="cb24-7"><a href="#cb24-7"></a>      <span class="fu">ETS</span>(season_adjust <span class="sc">~</span> <span class="fu">error</span>(<span class="st">"A"</span>) <span class="sc">+</span> <span class="fu">trend</span>(<span class="st">"A"</span>) <span class="sc">+</span> <span class="fu">season</span>(<span class="st">"N"</span>))</span>
+<span id="cb24-8"><a href="#cb24-8"></a>    ),</span>
+<span id="cb24-9"><a href="#cb24-9"></a>    <span class="at">HWM =</span> <span class="fu">ETS</span>(Arrivals <span class="sc">~</span> <span class="fu">error</span>(<span class="st">"M"</span>) <span class="sc">+</span> <span class="fu">trend</span>(<span class="st">"A"</span>) <span class="sc">+</span> <span class="fu">season</span>(<span class="st">"M"</span>)),</span>
+<span id="cb24-10"><a href="#cb24-10"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="model-evaluation-1" class="level2">
+<h2 class="anchored" data-anchor-id="model-evaluation-1">Model Evaluation</h2>
+<p><a href="#tbl-uk-arrivals-accuracy" class="quarto-xref">Table&nbsp;4</a> presents the forecasting accuracy of the four candidate models using RMSE and MAPE for both the training and test sets.</p>
+<ul>
+<li>The <code>STL_ETS</code> model achieved the lowest RMSE and MAPE on the training data, suggesting excellent in-sample fit. However, its poor test performance—particularly a sharp increase in MAPE—indicates overfitting and weak generalization.</li>
+<li>The <code>ETS_LOG</code> model offered the most balanced performance, with low RMSE and MAPE on both training and test sets, making it the most reliable overall.</li>
+<li>The Holt-Winters multiplicative model (<code>HWM</code>) showed moderate accuracy, outperforming <code>SNaive</code> and <code>STL_ETS</code> on the test set but not matching <code>ETS_LOG</code>.</li>
+<li>Finally, the seasonal naïve (<code>SNaive</code>) method performed worst overall in terms of RMSE, though its test set MAPE remained competitive due to the simplicity of the model.</li>
+</ul>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1"></a><span class="co"># Forecast on test period (2010 Q4 – 2012 Q3)</span></span>
+<span id="cb25-2"><a href="#cb25-2"></a>arrivals_uk_fc <span class="ot">&lt;-</span> arrivals_uk_fit <span class="sc">|&gt;</span> <span class="fu">forecast</span>(<span class="at">h =</span> <span class="dv">8</span>)</span>
+<span id="cb25-3"><a href="#cb25-3"></a></span>
+<span id="cb25-4"><a href="#cb25-4"></a><span class="co"># Evaluate model accuracy on training and test sets</span></span>
+<span id="cb25-5"><a href="#cb25-5"></a>arrivals_uk_accuracy <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(</span>
+<span id="cb25-6"><a href="#cb25-6"></a>  <span class="fu">accuracy</span>(arrivals_uk_fit),  <span class="co"># Training set</span></span>
+<span id="cb25-7"><a href="#cb25-7"></a>  <span class="fu">accuracy</span>(arrivals_uk_fc, arrivals_uk_test)  <span class="co"># Test set</span></span>
+<span id="cb25-8"><a href="#cb25-8"></a>) </span>
+<span id="cb25-9"><a href="#cb25-9"></a></span>
+<span id="cb25-10"><a href="#cb25-10"></a>arrivals_uk_accuracy <span class="sc">|&gt;</span></span>
+<span id="cb25-11"><a href="#cb25-11"></a>  <span class="fu">select</span>(<span class="at">model =</span> .model, <span class="at">type =</span> .type, RMSE, MAPE) <span class="sc">|&gt;</span></span>
+<span id="cb25-12"><a href="#cb25-12"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> type, <span class="at">values_from =</span> <span class="fu">c</span>(RMSE, MAPE)) <span class="sc">|&gt;</span></span>
+<span id="cb25-13"><a href="#cb25-13"></a>  <span class="fu">mutate</span>(<span class="at">model =</span> <span class="fu">as.character</span>(model)) <span class="sc">|&gt;</span></span>
+<span id="cb25-14"><a href="#cb25-14"></a>  <span class="fu">kbl</span>(</span>
+<span id="cb25-15"><a href="#cb25-15"></a>    <span class="at">digits =</span> <span class="dv">2</span>,</span>
+<span id="cb25-16"><a href="#cb25-16"></a>    <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Model"</span>, <span class="st">"Training"</span>, <span class="st">"Test"</span>, <span class="st">"Training"</span>, <span class="st">"Test"</span>),</span>
+<span id="cb25-17"><a href="#cb25-17"></a>    <span class="at">booktabs =</span> <span class="cn">TRUE</span></span>
+<span id="cb25-18"><a href="#cb25-18"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb25-19"><a href="#cb25-19"></a>  <span class="fu">add_header_above</span>(<span class="fu">c</span>(<span class="st">" "</span> <span class="ot">=</span> <span class="dv">1</span>, <span class="st">"RMSE"</span> <span class="ot">=</span> <span class="dv">2</span>, <span class="st">"MAPE"</span> <span class="ot">=</span> <span class="dv">2</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb25-20"><a href="#cb25-20"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="fu">c</span>(<span class="st">"striped"</span>, <span class="st">"hover"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div id="tbl-uk-arrivals-accuracy" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-uk-arrivals-accuracy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;4: Forecast accuracy (RMSE and MAPE) of each model on training and test sets
+</figcaption>
+<div aria-describedby="tbl-uk-arrivals-accuracy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="table table-striped table-hover do-not-create-environment cell caption-top table-sm small" data-quarto-postprocess="true">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th" style="text-align: left; empty-cells: hide; border-bottom: hidden;"></th>
+<th colspan="2" data-quarto-table-cell-role="th" style="text-align: center; border-bottom: hidden; padding-bottom: 0; padding-left: 3px; padding-right: 3px;"><div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+RMSE
+</div></th>
+<th colspan="2" data-quarto-table-cell-role="th" style="text-align: center; border-bottom: hidden; padding-bottom: 0; padding-left: 3px; padding-right: 3px;"><div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+MAPE
+</div></th>
+</tr>
+<tr class="even">
+<th style="text-align: left;" data-quarto-table-cell-role="th">Model</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">Training</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">Test</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">Training</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">Test</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">SNaive</td>
+<td style="text-align: right;">11639.74</td>
+<td style="text-align: right;">14265.93</td>
+<td style="text-align: right;">9.10</td>
+<td style="text-align: right;">7.32</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ETS_LOG</td>
+<td style="text-align: right;">8103.41</td>
+<td style="text-align: right;">8786.53</td>
+<td style="text-align: right;">6.96</td>
+<td style="text-align: right;">5.68</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">STL_ETS</td>
+<td style="text-align: right;">7497.01</td>
+<td style="text-align: right;">18979.61</td>
+<td style="text-align: right;">5.99</td>
+<td style="text-align: right;">12.19</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">HWM</td>
+<td style="text-align: right;">8227.60</td>
+<td style="text-align: right;">10955.29</td>
+<td style="text-align: right;">6.97</td>
+<td style="text-align: right;">7.26</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>In summary, <code>ETS_LOG</code> provides the best compromise between fit and forecast accuracy, while <code>STL_ETS</code>, despite strong training metrics, fails to generalize well (See <a href="#fig-uk-arrivals-forecast-comparison" class="quarto-xref">Figure&nbsp;15</a>)</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1"></a><span class="co"># Forecast using all models</span></span>
+<span id="cb26-2"><a href="#cb26-2"></a>arrivals_uk_fc <span class="ot">&lt;-</span> arrivals_uk_fit <span class="sc">|&gt;</span> <span class="fu">forecast</span>(<span class="at">h =</span> <span class="dv">8</span>)</span>
+<span id="cb26-3"><a href="#cb26-3"></a></span>
+<span id="cb26-4"><a href="#cb26-4"></a><span class="co"># Filter to zoom-in period (2008 Q1 onward)</span></span>
+<span id="cb26-5"><a href="#cb26-5"></a>arrivals_uk_fc <span class="sc">|&gt;</span></span>
+<span id="cb26-6"><a href="#cb26-6"></a>  <span class="fu">filter</span>(Quarter <span class="sc">&gt;=</span> <span class="fu">yearquarter</span>(<span class="st">"2008 Q1"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb26-7"><a href="#cb26-7"></a>  <span class="fu">autoplot</span>(</span>
+<span id="cb26-8"><a href="#cb26-8"></a>    arrivals_from_uk <span class="sc">|&gt;</span> <span class="fu">filter</span>(Quarter <span class="sc">&gt;=</span> <span class="fu">yearquarter</span>(<span class="st">"2008 Q1"</span>)),</span>
+<span id="cb26-9"><a href="#cb26-9"></a>    <span class="at">level =</span> <span class="cn">NULL</span></span>
+<span id="cb26-10"><a href="#cb26-10"></a>  ) <span class="sc">+</span></span>
+<span id="cb26-11"><a href="#cb26-11"></a>  <span class="fu">labs</span>(</span>
+<span id="cb26-12"><a href="#cb26-12"></a>    <span class="at">title =</span> <span class="st">"Zoomed Forecast Comparison: UK Arrivals to Australia"</span>,</span>
+<span id="cb26-13"><a href="#cb26-13"></a>    <span class="at">subtitle =</span> <span class="st">"Focus on test period: 2010 Q4 – 2012 Q3"</span>,</span>
+<span id="cb26-14"><a href="#cb26-14"></a>    <span class="at">x =</span> <span class="st">"Year"</span>,</span>
+<span id="cb26-15"><a href="#cb26-15"></a>    <span class="at">y =</span> <span class="st">"Number of Arrivals"</span>,</span>
+<span id="cb26-16"><a href="#cb26-16"></a>    <span class="at">caption =</span> <span class="st">"Source: Tourism Research Australia"</span></span>
+<span id="cb26-17"><a href="#cb26-17"></a>  ) <span class="sc">+</span></span>
+<span id="cb26-18"><a href="#cb26-18"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">label_number</span>(<span class="at">scale =</span> <span class="fl">1e-3</span>, <span class="at">suffix =</span> <span class="st">"k"</span>)) <span class="sc">+</span></span>
+<span id="cb26-19"><a href="#cb26-19"></a>  <span class="fu">guides</span>(<span class="at">color =</span> <span class="fu">guide_legend</span>(<span class="at">title =</span> <span class="st">"Model"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-uk-arrivals-forecast-comparison" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-uk-arrivals-forecast-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Assignment2_files/figure-html/fig-uk-arrivals-forecast-comparison-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-uk-arrivals-forecast-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;15: Zoomed-in comparison of forecasts from four models against actual UK arrivals to Australia, focusing on the 2010 Q4 – 2012 Q3 test period.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Based on the accuracy table (<a href="#tbl-uk-arrivals-accuracy" class="quarto-xref">Table&nbsp;4</a>), <code>ETS_LOG</code> had the lowest RMSE and MAPE on both training and test sets, so it is the best-performing model overall. <a href="#fig-uk-arrivals-residuals" class="quarto-xref">Figure&nbsp;16</a> shows that the innovation residuals are uncorrelated and have zero-mean, suggesting the forecasts are good.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1"></a><span class="co"># Residual diagnostics for best-performing model</span></span>
+<span id="cb27-2"><a href="#cb27-2"></a>arrivals_uk_fit <span class="sc">|&gt;</span></span>
+<span id="cb27-3"><a href="#cb27-3"></a>  <span class="fu">select</span>(ETS_LOG) <span class="sc">|&gt;</span></span>
+<span id="cb27-4"><a href="#cb27-4"></a>  <span class="fu">gg_tsresiduals</span>() <span class="sc">+</span></span>
+<span id="cb27-5"><a href="#cb27-5"></a>  <span class="fu">labs</span>(</span>
+<span id="cb27-6"><a href="#cb27-6"></a>    <span class="at">title =</span> <span class="st">"Residual Diagnostics"</span>,</span>
+<span id="cb27-7"><a href="#cb27-7"></a>    <span class="at">subtitle =</span> <span class="st">"ETS applied to log-transformed arrivals"</span></span>
+<span id="cb27-8"><a href="#cb27-8"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-uk-arrivals-residuals" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-uk-arrivals-residuals-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Assignment2_files/figure-html/fig-uk-arrivals-residuals-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-uk-arrivals-residuals-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;16: Residual diagnostics for the log-transformed ETS model fitted to UK arrivals training data.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Applying the Ljung-Box test, we obtain the following result.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1"></a><span class="fu">augment</span>(arrivals_uk_fit) <span class="sc">|&gt;</span></span>
+<span id="cb28-2"><a href="#cb28-2"></a>  <span class="fu">features</span>(.innov, ljung_box, <span class="at">lag =</span> <span class="dv">10</span>) <span class="sc">|&gt;</span></span>
+<span id="cb28-3"><a href="#cb28-3"></a>  <span class="fu">select</span>(<span class="at">Model =</span> .model, <span class="at">LB_Statistic =</span> lb_stat, <span class="at">P_Value =</span> lb_pvalue) <span class="sc">|&gt;</span></span>
+<span id="cb28-4"><a href="#cb28-4"></a>  <span class="fu">kbl</span>(<span class="at">digits =</span> <span class="dv">3</span>, <span class="at">booktabs =</span> <span class="cn">TRUE</span>, <span class="at">caption =</span> <span class="cn">NULL</span>) <span class="sc">|&gt;</span></span>
+<span id="cb28-5"><a href="#cb28-5"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="fu">c</span>(<span class="st">"striped"</span>, <span class="st">"hover"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div id="tbl-uk-arrivals-ljungbox" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-uk-arrivals-ljungbox-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5: Ljung–Box test (lag 10) on residuals from each forecasting model for UK arrivals.
+</figcaption>
+<div aria-describedby="tbl-uk-arrivals-ljungbox-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="table table-striped table-hover do-not-create-environment cell caption-top table-sm small" data-quarto-postprocess="true">
+<thead>
+<tr class="header">
+<th style="text-align: left;" data-quarto-table-cell-role="th">Model</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">LB_Statistic</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">P_Value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">ETS_LOG</td>
+<td style="text-align: right;">11.032</td>
+<td style="text-align: right;">0.355</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">HWM</td>
+<td style="text-align: right;">12.849</td>
+<td style="text-align: right;">0.232</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">SNaive</td>
+<td style="text-align: right;">51.949</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">STL_ETS</td>
+<td style="text-align: right;">9.917</td>
+<td style="text-align: right;">0.448</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p><a href="#tbl-uk-arrivals-ljungbox" class="quarto-xref">Table&nbsp;5</a> shows the Ljung–Box test results (lag = 10) applied to the residuals of each model. The null hypothesis is that residuals are uncorrelated (i.e., resemble white noise).</p>
+<ul>
+<li>For <code>ETS_LOG</code>, the p-value is <span class="math inline">\(0.355\)</span>, indicating no significant autocorrelation in the residuals — a good sign.</li>
+<li><code>HWM</code> also passes the test (<span class="math inline">\(p = 0.232\)</span>).</li>
+<li><code>SNaive</code> fails the test (<span class="math inline">\(p &lt; 0.001\)</span>), indicating significant autocorrelation and poor residual behavior.</li>
+<li><code>STL_ETS</code> performs well with <span class="math inline">\(p = 0.448\)</span>, suggesting acceptable residual independence.</li>
+</ul>
+<p>We conclude that <code>ETS_LOG</code> is not only the most accurate model but also passes residual diagnostics — validating it as the best-performing model.</p>
+</section>
+<section id="time-series-cross-validation" class="level2">
+<h2 class="anchored" data-anchor-id="time-series-cross-validation">Time Series Cross-Validation</h2>
+<p>We now apply time series cross-validation (TSCV) to compare the forecasting accuracy of the same four models evaluated earlier: <code>SNaive</code>, <code>ETS_LOG</code>, <code>STL_ETS</code>, and <code>HWM</code>. Instead of a single train/test split, TSCV repeatedly trains each model on expanding windows of the time series and evaluates forecast accuracy over multiple rolling horizons.</p>
+<p>This approach better reflects real-world forecasting scenarios and offers a more reliable assessment of model performance.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1"></a><span class="co"># Perform 8-step ahead time series cross-validation</span></span>
+<span id="cb29-2"><a href="#cb29-2"></a>tscv_errors <span class="ot">&lt;-</span> arrivals_from_uk <span class="sc">|&gt;</span></span>
+<span id="cb29-3"><a href="#cb29-3"></a>  <span class="fu">stretch_tsibble</span>(<span class="at">.init =</span> <span class="dv">80</span>, <span class="at">.step =</span> <span class="dv">2</span>) <span class="sc">|&gt;</span>  <span class="co"># ~20 years of initial training</span></span>
+<span id="cb29-4"><a href="#cb29-4"></a>  <span class="fu">model</span>(</span>
+<span id="cb29-5"><a href="#cb29-5"></a>    <span class="at">SNaive =</span> <span class="fu">SNAIVE</span>(Arrivals),</span>
+<span id="cb29-6"><a href="#cb29-6"></a>    <span class="at">ETS_LOG =</span> <span class="fu">ETS</span>(<span class="fu">log</span>(Arrivals) <span class="sc">~</span> <span class="fu">error</span>(<span class="st">"A"</span>) <span class="sc">+</span> <span class="fu">trend</span>(<span class="st">"Ad"</span>) <span class="sc">+</span> <span class="fu">season</span>(<span class="st">"A"</span>)),</span>
+<span id="cb29-7"><a href="#cb29-7"></a>    <span class="at">STL_ETS =</span> <span class="fu">decomposition_model</span>(</span>
+<span id="cb29-8"><a href="#cb29-8"></a>      <span class="fu">STL</span>(<span class="fu">log</span>(Arrivals)),</span>
+<span id="cb29-9"><a href="#cb29-9"></a>      <span class="fu">ETS</span>(season_adjust <span class="sc">~</span> <span class="fu">error</span>(<span class="st">"A"</span>) <span class="sc">+</span> <span class="fu">trend</span>(<span class="st">"A"</span>) <span class="sc">+</span> <span class="fu">season</span>(<span class="st">"N"</span>))</span>
+<span id="cb29-10"><a href="#cb29-10"></a>    ),</span>
+<span id="cb29-11"><a href="#cb29-11"></a>    <span class="at">HWM =</span> <span class="fu">ETS</span>(Arrivals <span class="sc">~</span> <span class="fu">error</span>(<span class="st">"M"</span>) <span class="sc">+</span> <span class="fu">trend</span>(<span class="st">"A"</span>) <span class="sc">+</span> <span class="fu">season</span>(<span class="st">"M"</span>))</span>
+<span id="cb29-12"><a href="#cb29-12"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb29-13"><a href="#cb29-13"></a>  <span class="fu">forecast</span>(<span class="at">h =</span> <span class="dv">8</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb29-14"><a href="#cb29-14"></a>  <span class="fu">accuracy</span>(arrivals_from_uk)  <span class="co"># compares forecast with actuals</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: The future dataset is incomplete, incomplete out-of-sample data will be treated as missing. 
+7 observations are missing between 2012 Q4 and 2014 Q2</code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1"></a><span class="co"># Summarize RMSE and MAPE for each model</span></span>
+<span id="cb31-2"><a href="#cb31-2"></a>tscv_errors <span class="sc">|&gt;</span></span>
+<span id="cb31-3"><a href="#cb31-3"></a>  <span class="fu">group_by</span>(.model) <span class="sc">|&gt;</span></span>
+<span id="cb31-4"><a href="#cb31-4"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb31-5"><a href="#cb31-5"></a>    <span class="at">RMSE =</span> <span class="fu">mean</span>(RMSE, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb31-6"><a href="#cb31-6"></a>    <span class="at">MAPE =</span> <span class="fu">mean</span>(MAPE, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb31-7"><a href="#cb31-7"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb31-8"><a href="#cb31-8"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb31-9"><a href="#cb31-9"></a>    <span class="fu">across</span>(<span class="fu">where</span>(is.numeric), \(x) <span class="fu">round</span>(x, <span class="dv">2</span>))</span>
+<span id="cb31-10"><a href="#cb31-10"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb31-11"><a href="#cb31-11"></a>  <span class="fu">rename</span>(<span class="at">Model =</span> .model) <span class="sc">|&gt;</span></span>
+<span id="cb31-12"><a href="#cb31-12"></a>  <span class="fu">kbl</span>(<span class="at">booktabs =</span> <span class="cn">TRUE</span>, <span class="at">caption =</span> <span class="cn">NULL</span>) <span class="sc">|&gt;</span></span>
+<span id="cb31-13"><a href="#cb31-13"></a>  <span class="fu">kable_styling</span>(<span class="at">bootstrap_options =</span> <span class="fu">c</span>(<span class="st">"striped"</span>, <span class="st">"hover"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div id="tbl-uk-arrivals-tscv" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-uk-arrivals-tscv-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;6: Forecast accuracy (RMSE and MAPE) of each model using time series cross-validation (8-step ahead rolling forecasts).
+</figcaption>
+<div aria-describedby="tbl-uk-arrivals-tscv-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="table table-striped table-hover do-not-create-environment cell caption-top table-sm small" data-quarto-postprocess="true">
+<thead>
+<tr class="header">
+<th style="text-align: left;" data-quarto-table-cell-role="th">Model</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">RMSE</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">MAPE</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">ETS_LOG</td>
+<td style="text-align: right;">13577.05</td>
+<td style="text-align: right;">7.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">HWM</td>
+<td style="text-align: right;">14089.91</td>
+<td style="text-align: right;">7.42</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">SNaive</td>
+<td style="text-align: right;">15681.63</td>
+<td style="text-align: right;">6.85</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">STL_ETS</td>
+<td style="text-align: right;">21495.83</td>
+<td style="text-align: right;">11.14</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p><a href="#tbl-uk-arrivals-tscv" class="quarto-xref">Table&nbsp;6</a> reports the RMSE and MAPE for each forecasting model based on 8-step ahead rolling forecasts using time series cross-validation.</p>
+<ul>
+<li><code>ETS_LOG</code> demonstrates consistently strong performance, achieving the lowest RMSE and maintaining the best MAPE among the candidate models. Its use of log transformation and damped trend appears to generalize well across time.</li>
+<li><code>HWM</code> (Holt-Winters’ Multiplicative) remains competitive, delivering robust and stable forecasts with only slightly higher error metrics than ETS_LOG.</li>
+<li><code>SNaive</code>, while simple and interpretable, underperforms relative to the ETS-based models, particularly in terms of RMSE. This reaffirms the patterns observed in the holdout test evaluation.</li>
+<li><code>STL_ETS</code> performs the worst overall. Its poor RMSE and MAPE may be attributed to STL’s fixed seasonal window, which may not adapt well to local structure in rolling forecast origins.</li>
+</ul>
+<p>These results reinforce <code>ETS_LOG</code> as the most effective model for forecasting UK arrivals, both in standard train-test evaluation and under time series cross-validation.</p>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
